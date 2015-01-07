@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    package="com.wci.android.ballistaibeacondemo"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Needed permissions in order to scan for beacons. -->
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+
+    <!-- Declaration that this app is usable on phones with Bluetooth Low Energy. -->
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true"/>
+
+    <application
+        android:name=".BeaconApp"
+        android:allowBackup="true"
+        android:icon="@drawable/success_512"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".activities.MainActivity"
+            android:label="@string/app_name">
+
+        </activity>
+        <activity
+            android:name=".activities.BeaconDetailActivity"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@android:style/Theme.Holo.Light.Dialog.NoActionBar"/>
+
+        <service
+            android:name=".bluetooth.ibeacon.service.IBeaconService"
+            android:enabled="true"
+            android:exported="false"
+            android:isolatedProcess="false"
+            android:label="iBeacon"/>
+        <service
+            android:name=".bluetooth.ibeacon.IBeaconIntentProcessor"
+            android:enabled="true"/>
+
+        <activity
+            android:name=".activities.IntroActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppThemeNoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".activities.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.wci.android.ballistaibeacondemo.activities.MainActivity"/>
+        </activity>
+    </application>
+
+</manifest>

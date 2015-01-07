@@ -1,0 +1,2 @@
+include ':app', ':robo-wherecloud'
+project(':robo-wherecloud').projectDir=new File("$AS_HOME",'/robo-wherecloud/app')

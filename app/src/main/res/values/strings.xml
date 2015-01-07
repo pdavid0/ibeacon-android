@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Ballista iBeacon Demo</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="dialog_title_bt_not_enabled">Bluetooth is not enabled or Bluetooth LE is not available</string>
+    <string name="dialog_msg_enable_bt_and_restart">Please enable bluetooth in settings and restart this application.</string>
+    <string name="ballista_api_list_beacons">https://api.goballista.com:443/beacons</string>
+    <string name="toast_list_beacons_failed">Failed to list beacons</string>
+
+    <string-array name="base_section_names">
+        <item name="title_section1">Raw Data</item>
+        <item name="title_section2">Media</item>
+    </string-array>
+
+    <string name="title_activity_intro">IntroActivity</string>
+
+
+    <color name="primary">#009688</color>
+    <color name="primary_dark">#00796B</color>
+    <color name="primary_light">#B2DFDB</color>
+    <color name="accent">#FF4081</color>
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#727272</color>
+    <color name="icons">#FFFFFF</color>
+    <color name="divider">#B6B6B6</color>
+</resources>
