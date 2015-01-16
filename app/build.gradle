@@ -38,4 +38,5 @@ dependencies {
     compile 'com.android.support:support-v4:21.0.3'
     compile 'com.squareup.picasso:picasso:2.3.4'
     compile 'com.jakewharton:butterknife:5.1.1'
+    compile 'org.altbeacon:android-beacon-library:2+'
 }

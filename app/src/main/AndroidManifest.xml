@@ -20,27 +20,21 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".activities.MainActivity"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:launchMode="singleInstance"
+            android:screenOrientation="portrait">
 
         </activity>
+
         <activity
             android:name=".activities.BeaconDetailActivity"
             android:parentActivityName=".activities.MainActivity"
             android:theme="@android:style/Theme.Holo.Light.Dialog.NoActionBar"/>
 
-        <service
-            android:name=".bluetooth.ibeacon.service.IBeaconService"
-            android:enabled="true"
-            android:exported="false"
-            android:isolatedProcess="false"
-            android:label="iBeacon"/>
-        <service
-            android:name=".bluetooth.ibeacon.IBeaconIntentProcessor"
-            android:enabled="true"/>
-
         <activity
             android:name=".activities.IntroActivity"
             android:label="@string/app_name"
+            android:launchMode="singleInstance"
             android:theme="@style/AppThemeNoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -51,6 +45,7 @@
         <activity
             android:name=".activities.SettingsActivity"
             android:label="@string/title_activity_settings"
+            android:launchMode="singleInstance"
             android:parentActivityName=".activities.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
