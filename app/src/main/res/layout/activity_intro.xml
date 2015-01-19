@@ -31,6 +31,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:gravity="center"
         android:orientation="horizontal">
 
         <ImageView
@@ -69,6 +70,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
         android:orientation="horizontal">
 
         <ImageView
@@ -77,8 +80,6 @@
             android:layout_height="64dp"
             android:layout_weight="1"
             android:alpha="0"
-            android:maxHeight="96dp"
-            android:maxWidth="96dp"
             android:padding="@dimen/activity_horizontal_margin"
             android:src="@drawable/right_round"
             android:tint="@color/accent"/>

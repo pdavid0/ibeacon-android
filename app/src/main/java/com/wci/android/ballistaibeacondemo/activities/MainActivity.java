@@ -1,18 +1,9 @@
 package com.wci.android.ballistaibeacondemo.activities;
 
-import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.RemoteException;
-import android.os.SystemClock;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,58 +19,81 @@ import com.octo.android.robospice.persistence.exception.SpiceException;
 import com.octo.android.robospice.request.listener.RequestListener;
 import com.wci.android.ballistaibeacondemo.BeaconApp;
 import com.wci.android.ballistaibeacondemo.R;
-import com.wci.android.ballistaibeacondemo.adapters.IBeaconAdapter;
-import com.wci.android.ballistaibeacondemo.bluetooth.ibeacon.IBeacon;
-import com.wci.android.ballistaibeacondemo.bluetooth.ibeacon.IBeaconConsumer;
-import com.wci.android.ballistaibeacondemo.bluetooth.ibeacon.IBeaconManager;
-import com.wci.android.ballistaibeacondemo.bluetooth.ibeacon.MonitorNotifier;
-import com.wci.android.ballistaibeacondemo.bluetooth.ibeacon.RangeNotifier;
-import com.wci.android.ballistaibeacondemo.bluetooth.ibeacon.Region;
-import com.wci.android.ballistaibeacondemo.http.Beacon;
+import com.wci.android.ballistaibeacondemo.adapters.BeaconAdapter;
+import com.wci.android.ballistaibeacondemo.http.BallistaBeacon;
 import com.wci.android.ballistaibeacondemo.http.ListBeaconRequest;
 import com.wci.android.ballistaibeacondemo.http.ListBeaconResult;
 import com.wherecloud.android.http.RequestManager;
 import com.wherecloud.android.http.requests.AbstractRequest;
 
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconConsumer;
+import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.Identifier;
+import org.altbeacon.beacon.MonitorNotifier;
+import org.altbeacon.beacon.RangeNotifier;
+import org.altbeacon.beacon.Region;
+
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class MainActivity extends ListActivity implements IBeaconConsumer, RequestListener<ListBeaconResult> {
+public class MainActivity extends ListActivity implements BeaconConsumer, RequestListener<ListBeaconResult> {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final long TIME_TO_REACT = 5000L;
 
     private SpiceManager spiceManager;
 
-    private IBeaconManager iBeaconManager = IBeaconManager.getInstanceForApplication(this);
+    private BeaconManager mBeaconManager = BeaconManager.getInstanceForApplication(this);
     private AbstractRequest listBeaconRequest;
 
-    private ListView listView;
-    private IBeaconAdapter mAdapter;
+    private BeaconAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-
-//        checkBluetoothAvailable();
-        IBeaconManager.setDebug(false);
-        iBeaconManager.setForegroundBetweenScanPeriod(1000L);
-        iBeaconManager.bind(this);
+        setProgressBarIndeterminateVisibility(true);
 
         setContentView(R.layout.activity_main);
 
         //init adapter with empty list
-        listView = getListView();
-        mAdapter = new IBeaconAdapter(this, new ArrayList<IBeacon>());
-        listView.setAdapter(mAdapter);
+        ListView _listView = getListView();
+        mAdapter = new BeaconAdapter(this, new ArrayList<BallistaBeacon>());
+        _listView.setAdapter(mAdapter);
 
         spiceManager = RequestManager.getInstance().getSpiceManager();
         listBeaconRequest = new ListBeaconRequest(getString(R.string.ballista_api_list_beacons), this);
 
-        handler.postDelayed(runnable, 1000L);
+
+        mBeaconManager.setMonitorNotifier(new MonitorNotifier() {
+            @Override public void didEnterRegion(Region region) {
+                Log.i("MonitorNotifier", "Did enter Region ID : " + region.getUniqueId());
+            }
+
+            @Override public void didExitRegion(Region region) {
+                Log.i("MonitorNotifier", "Did exit Region ID : " + region.getUniqueId());
+            }
+
+            @Override public void didDetermineStateForRegion(int i, Region region) {
+                Log.i("MonitorNotifier", "Did determine Region ID : " + region.getUniqueId() + "\ti: " + ((i == 0) ? " INSIDE " : " OUTSIDE "));
+            }
+        });
+        mBeaconManager.setRangeNotifier(new RangeNotifier() {
+            @Override public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+                Log.i("RangeNotifier", "Did Range Beacons In Region : " + region.getUniqueId() + "\tcount: " + beacons.size());
+
+                for (Beacon _beacon : beacons) {
+
+                    String _UUID = _beacon.getId1().toString();
+                    Log.i("RangeNotifier", "Name: " + _beacon.getBluetoothName() + "\t UUID: " + _UUID);
+
+                    String _beaconPayload = BeaconApp.getInstance().getBeaconPayload(_UUID + "-" + _beacon.getId2().toString() + "-" + _beacon.getId3().toString());
+
+                    Log.i("PAYLOAD", _beaconPayload);
+                }
+            }
+        });
+        mBeaconManager.bind(this);
     }
 
     @Override
@@ -93,21 +107,32 @@ public class MainActivity extends ListActivity implements IBeaconConsumer, Reque
     @Override
     protected void onResume() {
         super.onResume();
+
         setProgressBarIndeterminateVisibility(true);
+
         RequestManager.getInstance().performRequest(listBeaconRequest, MainActivity.this, DurationInMillis.ALWAYS_EXPIRED, spiceManager);
+
+        ((BeaconApp) getApplication()).setMonitoringActivity(this);
+
+        if (mBeaconManager.isBound(this)) {
+            mBeaconManager.setBackgroundMode(false);
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        iBeaconManager.unBind(this);
+        mBeaconManager.unbind(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (iBeaconManager.isBound(this)) {
-            iBeaconManager.setBackgroundMode(this, true);
+
+        ((BeaconApp) getApplication()).setMonitoringActivity(null);
+
+        if (mBeaconManager.isBound(this)) {
+            mBeaconManager.setBackgroundMode(true);
         }
     }
 
@@ -141,13 +166,11 @@ public class MainActivity extends ListActivity implements IBeaconConsumer, Reque
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
 
-        IBeacon item = mAdapter.getItem(position);
-
-        Beacon beacon = new Beacon(item);
-        beacon.payload.url = BeaconApp.getInstance().getBeaconPayload(item);
+        BallistaBeacon mBeacon = mAdapter.getItem(position);
+//        mBeacon.payload.url = BeaconApp.getInstance().getBeaconPayload(mBeacon);
 
         final Intent intent = new Intent(this, BeaconDetailActivity.class);
-        intent.putExtra(BeaconDetailActivity.BEACON_KEY, new Gson().toJson(beacon));
+        intent.putExtra(BeaconDetailActivity.BEACON_KEY, new Gson().toJson(mBeacon));
         startActivity(intent);
 
         super.onListItemClick(l, v, position, id);
@@ -155,6 +178,7 @@ public class MainActivity extends ListActivity implements IBeaconConsumer, Reque
 
     @Override
     public void onRequestFailure(SpiceException spiceException) {
+        spiceException.printStackTrace();
         Toast.makeText(this, R.string.toast_list_beacons_failed, Toast.LENGTH_SHORT).show();
     }
 
@@ -164,13 +188,23 @@ public class MainActivity extends ListActivity implements IBeaconConsumer, Reque
         if (result != null) {
             if (result.beacons != null) {
                 BeaconApp.getInstance().setBeaconList(result.beacons);
+                mAdapter.addAll(result.beacons);
 
-                //
-                for (Beacon b : result.beacons) {
+                ArrayList<String> _uuids = new ArrayList<>();
+                //unique uuids
+                for (BallistaBeacon _beacon : result.beacons) {
+                    final String _uuid = _beacon.uuid;
+                    if (!_uuids.contains(_uuid)) {
+                        _uuids.add(_uuid);
+                    }
+                }
+
+                for (String s : _uuids) {
                     try {
-                        Region region = new Region(b.toString(), b.uuid, b.major, b.minor);
-                        iBeaconManager.startMonitoringBeaconsInRegion(region);
-                        iBeaconManager.startRangingBeaconsInRegion(region);
+                        Region region = new Region(s, Identifier.parse(s), null, null);
+
+                        mBeaconManager.startMonitoringBeaconsInRegion(region);
+                        mBeaconManager.startRangingBeaconsInRegion(region);
                     } catch (RemoteException e) {
                         Log.e(TAG, e.getLocalizedMessage());
                     }
@@ -179,109 +213,7 @@ public class MainActivity extends ListActivity implements IBeaconConsumer, Reque
         }
     }
 
-    @Override
-    public void onIBeaconServiceConnect() {
-        iBeaconManager.setMonitorNotifier(new MonitorNotifier() {
-
-            @Override
-            public void didEnterRegion(final Region region) {
-                Log.e(TAG, "I just saw an iBeacon named " + region.getUniqueId() + " for the first time!");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        IBeacon object = new IBeacon(region.getProximityUuid(), region.getMajor(), region.getMinor());
-                        mSeenBeacons.put(new Beacon(object).toString()
-                                , SystemClock.elapsedRealtimeNanos());
-                        mAdapter.add(object);
-                    }
-                });
-            }
-
-            @Override
-            public void didExitRegion(final Region region) {
-                Log.e(TAG, "I no longer see an iBeacon named " + region.getUniqueId());
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mAdapter.remove(new IBeacon(region.getProximityUuid(), region.getMajor(), region.getMinor()));
-                    }
-                });
-            }
-
-            @Override
-            public void didDetermineStateForRegion(int state, Region region) {
-                Log.e(TAG, "I have just switched from seeing/not seeing iBeacons: " + state);
-            }
-
-        });
-
-        iBeaconManager.setRangeNotifier(new RangeNotifier() {
-            @Override
-            public void didRangeBeaconsInRegion(final Collection<IBeacon> iBeacons, Region region) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mAdapter.addAll(iBeacons);
-                        for (IBeacon iBeacon : iBeacons) {
-                            mSeenBeacons.put(new Beacon(iBeacon).toString(), SystemClock.elapsedRealtimeNanos());
-                        }
-                    }
-                });
-            }
-        });
+    @Override public void onBeaconServiceConnect() {
+        Toast.makeText(this, "onBeaconServiceConnect", Toast.LENGTH_SHORT).show();
     }
-
-    public void showNotification(Beacon beacon) {
-        NotificationCompat.Builder mBuilder = new NotificationCompat
-                .Builder(this)
-                .setContentTitle("Hello from : " + beacon.uuid)
-                .setSmallIcon(R.drawable.ic_launcher)
-                .setContentText("You were near an iBeacon for at least " + TIME_TO_REACT + "seconds");
-
-        Intent resultIntent = new Intent(this, BeaconDetailActivity.class);
-        resultIntent.putExtra(BeaconDetailActivity.BEACON_KEY, new Gson().toJson(beacon));
-        // The stack builder object will contain an artificial back stack for the started Activity.
-        // This ensures that navigating backward from the Activity leads out of your application to the Home screen.
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        // Adds the back stack for the Intent (but not the Intent itself)
-        stackBuilder.addParentStack(MainActivity.class);
-        // Adds the Intent that starts the Activity to the top of the stack
-        stackBuilder.addNextIntent(resultIntent);
-
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-        mBuilder.setContentIntent(resultPendingIntent);
-
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        // mId allows you to update the notification later on.
-        mNotificationManager.notify(0, mBuilder.build());
-    }
-
-    ConcurrentHashMap<String, Long> mSeenBeacons = new ConcurrentHashMap<String, Long>();
-    private Handler handler = new Handler();
-
-    private Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            Iterator keyIterator = mSeenBeacons.keySet().iterator();
-            ArrayList<String> toRemove = new ArrayList<String>();
-            while (keyIterator.hasNext()) {
-                String key = (String) keyIterator.next();
-                Long mLastSeenTime = mSeenBeacons.get(key);
-
-                if (SystemClock.elapsedRealtimeNanos() - mLastSeenTime >= TIME_TO_REACT) {
-
-                    toRemove.add(key);
-                    Beacon beaconFromUUID = BeaconApp.getInstance().getBeaconFromUUID(key);
-                    if (beaconFromUUID != null) {
-                        showNotification(beaconFromUUID);
-                    }
-                }
-            }
-            for (String s : toRemove) {
-                mSeenBeacons.remove(s);
-            }
-            handler.postDelayed(this, 1000L);
-        }
-    };
 }

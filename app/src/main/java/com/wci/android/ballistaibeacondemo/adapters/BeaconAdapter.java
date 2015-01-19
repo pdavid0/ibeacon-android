@@ -9,35 +9,24 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
-import com.wci.android.ballistaibeacondemo.BeaconApp;
 import com.wci.android.ballistaibeacondemo.R;
-import com.wci.android.ballistaibeacondemo.bluetooth.ibeacon.IBeacon;
+import com.wci.android.ballistaibeacondemo.http.BallistaBeacon;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.TimerTask;
 
 /**
  * Created by philippe on 14-07-28.
  *
  * @author philippe
  */
-public class IBeaconAdapter extends ArrayAdapter<IBeacon> {
+public class BeaconAdapter extends ArrayAdapter<BallistaBeacon> {
 
     private final LayoutInflater inflater;
 
-    private List<IBeacon> list;
+    private List<BallistaBeacon> list;
 
-    private final TimerTask timer = new TimerTask() {
-        @Override
-        public void run() {
-            for (IBeacon b : list) {
-
-            }
-        }
-    };
-
-    public IBeaconAdapter(Context context, List<IBeacon> o) {
+    public BeaconAdapter(Context context, List<BallistaBeacon> o) {
         super(context, R.layout.list_item_ibeacon, o);
         list = o;
         this.inflater = LayoutInflater.from(context);
@@ -55,12 +44,12 @@ public class IBeaconAdapter extends ArrayAdapter<IBeacon> {
         } else {
             h = (ViewHolder) convertView.getTag();
         }
-        IBeacon beacon = getItem(position);
-        h.uuid.setText(beacon.getProximityUuid());
-        h.major.setText("" + beacon.getMajor());
-        h.minor.setText("" + beacon.getMinor());
-
-        String beaconPayload = BeaconApp.getInstance().getBeaconPayload(beacon);
+        BallistaBeacon beacon = getItem(position);
+        //TODO
+        h.uuid.setText(beacon.uuid);
+        h.major.setText("" + beacon.major);
+        h.minor.setText("" + beacon.minor);
+        String beaconPayload = beacon.payload.url;
 
         Picasso.with(getContext())
                 .load(beaconPayload)
@@ -75,7 +64,7 @@ public class IBeaconAdapter extends ArrayAdapter<IBeacon> {
     }
 
     @Override
-    public void add(IBeacon object) {
+    public void add(BallistaBeacon object) {
 //        super.add(object);
         if (!list.contains(object)) {
             list.add(object);
@@ -86,16 +75,16 @@ public class IBeaconAdapter extends ArrayAdapter<IBeacon> {
     }
 
     @Override
-    public void addAll(Collection<? extends IBeacon> collection) {
-//        super.addAll(collection);
-        for (IBeacon b : collection) {
+    public void addAll(Collection<? extends BallistaBeacon> collection) {
+        //        super.addAll(collection);
+        for (BallistaBeacon b : collection) {
             this.add(b);
         }
     }
 
     @Override
-    public void remove(IBeacon object) {
-//        super.remove(object);
+    public void remove(BallistaBeacon object) {
+        //        super.remove(object);
         if (list.contains(object)) {
             list.remove(object);
         }
@@ -103,9 +92,9 @@ public class IBeaconAdapter extends ArrayAdapter<IBeacon> {
     }
 
     @Override
-    public void addAll(IBeacon... items) {
-//        super.addAll(items);
-        for (IBeacon b : items) {
+    public void addAll(BallistaBeacon... items) {
+        //        super.addAll(items);
+        for (BallistaBeacon b : items) {
             this.add(b);
         }
     }

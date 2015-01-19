@@ -1,25 +1,24 @@
 package com.wci.android.ballistaibeacondemo.activities;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.wci.android.ballistaibeacondemo.R;
-import com.wci.android.ballistaibeacondemo.bluetooth.ibeacon.IBeaconManager;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import org.altbeacon.beacon.BeaconManager;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -44,6 +43,15 @@ public class IntroActivity extends Activity {
         setContentView(R.layout.activity_intro);
         ButterKnife.inject(this);
 
+        int mTintColor = getResources().getColor(R.color.primary_light);
+        mNetworkIsAvailable = networkIsAvailable();
+        if (mNetworkIsAvailable) {
+            animateViewAlpha(mImgConnection, 0);
+        } else {
+            Toast.makeText(this, "You do not have connectivity.", Toast.LENGTH_SHORT).show();
+            animateViewAlpha(mImgConnection, 0, mTintColor);
+        }
+
         //TODO: ask user to open bluetooth
         mBluetoothAvailable = bluetoothAvailable();
         if (mBluetoothAvailable) {
@@ -53,41 +61,40 @@ public class IntroActivity extends Activity {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             }
-            animateViewAlpha(mImgBtServices, 0);
+            animateViewAlpha(mImgBtServices, 1);
         } else {
-            Toast.makeText(this, "Bluetooth Low Energy is not available on your device. This application is rather useless without it.", Toast.LENGTH_LONG).show();
-        }
-
-        mNetworkIsAvailable = networkIsAvailable();
-        if (mNetworkIsAvailable) {
-            animateViewAlpha(mImgConnection, 1);
-        } else {
-            Toast.makeText(this, "You do not have connectivity.", Toast.LENGTH_LONG).show();
-            animateViewAlpha(mImgConnection, 1);
+            Toast.makeText(this, "Bluetooth Low Energy is not enabled on your device. This application is rather useless without it. Open bluetooth and restart App.", Toast.LENGTH_SHORT).show();
+            animateViewAlpha(mImgBtServices, 1, mTintColor);
         }
 
         if (mBluetoothAvailable && mNetworkIsAvailable) {
             animateViewAlpha(mOk, 2);
             animateViewAlpha(mNext, 3);
+            mNext.setTag(1);//initialisation worked
         } else {
-            Toast.makeText(this, "Something is missing !", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Something is missing !", Toast.LENGTH_SHORT).show();
             mNext.setImageResource(R.drawable.help);
-            mNext.setTag(-1);
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.GINGERBREAD) {
-                mNext.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.primary_light)));
-            }
-            animateViewAlpha(mNext, 1);
+            mNext.setTag(-1);//initialisation didn't work
+            mOk.setImageResource(R.drawable.close_96);
+            animateViewAlpha(mOk, 2, mTintColor);
+            animateViewAlpha(mNext, 3, mTintColor);
+
+            mNext.animate().y(200).translationY(-100).setStartDelay(2800).setInterpolator(new AccelerateDecelerateInterpolator()).start();
         }
     }
 
     @OnClick(R.id.intro_btn_next)
     public void onClickNext(View v) {
 
-        final boolean initialisationWorked = v.getTag() != null;
+        final boolean initialisationWorked = v.getTag() != -1;
         if (initialisationWorked) {
-        } else {
             finish();
-            startActivity(new Intent(this, MainActivity.class));
+            startMainActivity();
+
+        } else {
+            Toast _toast = Toast.makeText(this, "You need to fix problems before continuing !", Toast.LENGTH_SHORT);
+            _toast.setGravity(Gravity.TOP, 0, 0);
+            _toast.show();
         }
     }
 
@@ -98,14 +105,26 @@ public class IntroActivity extends Activity {
      * @param i    the index of the view, that way we can add a delay to the animation
      */
     private void animateViewAlpha(View view, int i) {
-        view.animate().setDuration(1000).setStartDelay(i * 1000).alpha(1).start();
+        view.animate().setDuration(1000).setStartDelay(i * 800).alpha(1).start();
+    }
+
+    /**
+     * Show a view with an Alpha Animation, from 0 to 1.
+     *
+     * @param view the view to animate
+     * @param i    the index of the view, that way we can add a delay to the animation
+     * @param tint
+     */
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void animateViewAlpha(ImageView view, int i, int tint) {
+        view.setColorFilter(tint);
+        view.animate().setDuration(1000).setStartDelay(i * 800).alpha(1).start();
     }
 
     /**
      * Start {@link com.wci.android.ballistaibeacondemo.activities.MainActivity}
      */
     public void startMainActivity() {
-        //TODO : add animations
         startActivity(new Intent(this, MainActivity.class),
                 ActivityOptions.makeCustomAnimation(this,
                         R.anim.wci_default_enter_slideleft,
@@ -120,13 +139,12 @@ public class IntroActivity extends Activity {
      */
     private boolean bluetoothAvailable() {
         try {
-            if (!IBeaconManager.getInstanceForApplication(this).checkAvailability()) {
-                return true;
-            }
+            final BeaconManager _instanceForApplication = BeaconManager.getInstanceForApplication(this);
+            return _instanceForApplication.checkAvailability();
         } catch (RuntimeException e) {
+            Toast.makeText(this, "Bluetooth Low Energy is not available on your device. This application is rather useless without it.", Toast.LENGTH_SHORT).show();
             return false;
         }
-        return false;
     }
 
     /**
@@ -148,40 +166,40 @@ public class IntroActivity extends Activity {
         return cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnectedOrConnecting();
     }
 
-    /**
-     * Send a HTTP request to Google, act as a ping.
-     * TODO: since we send a command it must be put in an AsyncCall
-     *
-     * @return true if has access to internet
-     */
-    private boolean hasActiveInternetConnection() {
-        if (networkIsAvailable()) {
-
-            try {
-                HttpURLConnection urlc = (HttpURLConnection) (new URL("http://www.google.com").openConnection());
-                urlc.setRequestProperty("User-Agent", "Test");
-                urlc.setRequestProperty("Connection", "close");
-                urlc.setConnectTimeout(1500);
-                urlc.connect();
-                return (urlc.getResponseCode() == 200);
-            } catch (IOException e) {
-                Log.e(TAG, "Error checking internet connection", e);
-            }
-        } else {
-            Log.d(TAG, "No network available!");
-        }
-        return false;
-        //        new AsyncTask<Void, Void, Void>() {
-        //            @Override protected Void doInBackground(Void... params) {
-        //                if (hasActiveInternetConnection()) {
-        //                    runOnUiThread(new Runnable() {
-        //                        @Override public void run() {
-        //                        }
-        //                    });
-        //                }
-        //                return null;
-        //            }
-        //        }.execute();
-    }
+//    /**
+//     * Send a HTTP request to Google, act as a ping.
+//     * TODO: since we send a command it must be put in an AsyncCall
+//     *
+//     * @return true if has access to internet
+//     */
+//    private boolean hasActiveInternetConnection() {
+//        if (networkIsAvailable()) {
+//
+//            try {
+//                HttpURLConnection urlc = (HttpURLConnection) (new URL("http://www.google.com").openConnection());
+//                urlc.setRequestProperty("User-Agent", "Test");
+//                urlc.setRequestProperty("Connection", "close");
+//                urlc.setConnectTimeout(1500);
+//                urlc.connect();
+//                return (urlc.getResponseCode() == 200);
+//            } catch (IOException e) {
+//                Log.e(TAG, "Error checking internet connection", e);
+//            }
+//        } else {
+//            Log.d(TAG, "No network available!");
+//        }
+//        return false;
+//        //        new AsyncTask<Void, Void, Void>() {
+//        //            @Override protected Void doInBackground(Void... params) {
+//        //                if (hasActiveInternetConnection()) {
+//        //                    runOnUiThread(new Runnable() {
+//        //                        @Override public void run() {
+//        //                        }
+//        //                    });
+//        //                }
+//        //                return null;
+//        //            }
+//        //        }.execute();
+//    }
 
 }

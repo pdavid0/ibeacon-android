@@ -8,5 +8,5 @@ import java.util.List;
  * @author philippe
  */
 public class ListBeaconResult {
-    public List<Beacon> beacons;
+    public List<BallistaBeacon> beacons;
 }
