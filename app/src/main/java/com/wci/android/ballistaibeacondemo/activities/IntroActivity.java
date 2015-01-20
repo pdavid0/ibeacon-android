@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Gravity;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -29,15 +30,21 @@ public class IntroActivity extends Activity {
     private static final String TAG = "IntroActivity";
     private static final int REQUEST_ENABLE_BT = 1;
 
-    @InjectView(R.id.intro_img_connection) ImageView mImgConnection;
-    @InjectView(R.id.intro_img_bt_services) ImageView mImgBtServices;
-    @InjectView(R.id.intro_img_ok) ImageView mOk;
-    @InjectView(R.id.intro_btn_next) ImageView mNext;
+    @InjectView(R.id.intro_img_connection)
+    ImageView mImgConnection;
+    @InjectView(R.id.intro_img_bt_services)
+    ImageView mImgBtServices;
+    @InjectView(R.id.intro_img_ok)
+    ImageView mOk;
+    @InjectView(R.id.intro_btn_next)
+    ImageView mNext;
 
     private boolean mBluetoothAvailable;
     private boolean mNetworkIsAvailable;
+    private boolean hasProfileRegistered;
 
-    @SuppressLint("NewApi") @Override
+    @SuppressLint("NewApi")
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_intro);
@@ -67,20 +74,28 @@ public class IntroActivity extends Activity {
             animateViewAlpha(mImgBtServices, 1, mTintColor);
         }
 
-        if (mBluetoothAvailable && mNetworkIsAvailable) {
+        hasProfileRegistered = hasProfileRegistered();
+        if (!hasProfileRegistered) {
             animateViewAlpha(mOk, 2);
+        }else {
+            animateViewAlpha(mOk, 3, mTintColor);
+            mOk.setImageResource(R.drawable.user);
+        }
+
+        if (mBluetoothAvailable && mNetworkIsAvailable && hasProfileRegistered) {
             animateViewAlpha(mNext, 3);
             mNext.setTag(1);//initialisation worked
         } else {
             Toast.makeText(this, "Something is missing !", Toast.LENGTH_SHORT).show();
             mNext.setImageResource(R.drawable.help);
             mNext.setTag(-1);//initialisation didn't work
-            mOk.setImageResource(R.drawable.close_96);
-            animateViewAlpha(mOk, 2, mTintColor);
-            animateViewAlpha(mNext, 3, mTintColor);
 
             mNext.animate().y(200).translationY(-100).setStartDelay(2800).setInterpolator(new AccelerateDecelerateInterpolator()).start();
         }
+    }
+
+    private boolean hasProfileRegistered() {
+        return PreferenceManager.getDefaultSharedPreferences(this).getString("profile", "undefined").equalsIgnoreCase("undefined");
     }
 
     @OnClick(R.id.intro_btn_next)

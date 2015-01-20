@@ -10,8 +10,13 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.firebase.client.DataSnapshot;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
 import com.wci.android.ballistaibeacondemo.activities.MainActivity;
 import com.wci.android.ballistaibeacondemo.http.BallistaBeacon;
+import com.wci.android.ballistaibeacondemo.models.People;
 
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
@@ -34,13 +39,18 @@ public class BeaconApp extends Application implements BootstrapNotifier {
     private static final String TAG = BeaconApp.class.getSimpleName();
 
     private static BeaconApp instance;
+
     //    private List<BallistaBeacon> beaconList;
     HashMap<String, BallistaBeacon> beaconHash = new HashMap<>();
+    public HashMap<String, People> peopleHash = new HashMap<>();
+
     private RegionBootstrap regionBootstrap;
     private BackgroundPowerSaver backgroundPowerSaver;
     private boolean haveDetectedBeaconsSinceBoot = false;
     private BeaconConsumer monitoringActivity = null;
     private BeaconManager beaconManager;
+
+    private Firebase myFirebaseRef;
 
     public static BeaconApp getInstance() {
         return instance;
@@ -50,6 +60,9 @@ public class BeaconApp extends Application implements BootstrapNotifier {
     public void onCreate() {
         instance = this;
         super.onCreate();
+
+        Firebase.setAndroidContext(this);
+        myFirebaseRef = new Firebase("https://wherecloud.firebaseio.com/");
 
         beaconManager = BeaconManager.getInstanceForApplication(this);
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
@@ -149,5 +162,9 @@ public class BeaconApp extends Application implements BootstrapNotifier {
 
     public void setMonitoringActivity(BeaconConsumer activity) {
         this.monitoringActivity = activity;
+    }
+
+    public void addPeopleChangeListener(ValueEventListener listener){
+        myFirebaseRef.child("people").addValueEventListener(listener);
     }
 }
