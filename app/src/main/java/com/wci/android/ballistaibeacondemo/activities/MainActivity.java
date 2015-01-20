@@ -36,6 +36,7 @@ import org.altbeacon.beacon.Region;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 public class MainActivity extends ListActivity implements BeaconConsumer, RequestListener<ListBeaconResult> {
 
@@ -68,6 +69,11 @@ public class MainActivity extends ListActivity implements BeaconConsumer, Reques
         mBeaconManager.setMonitorNotifier(new MonitorNotifier() {
             @Override public void didEnterRegion(Region region) {
                 Log.i("MonitorNotifier", "Did enter Region ID : " + region.getUniqueId());
+//                new BallistaBeacon(region);
+//                HashMap<String, BallistaBeacon> beaconHash = BeaconApp.getInstance().getBeaconHash();
+//                for (String identifier : beaconHash.keySet()) {
+//                    identifier.equalsIgnoreCase()
+//                }
             }
 
             @Override public void didExitRegion(Region region) {
@@ -91,6 +97,7 @@ public class MainActivity extends ListActivity implements BeaconConsumer, Reques
 
                     Log.i("PAYLOAD", _beaconPayload);
                 }
+                mAdapter.updateAll(beacons);
             }
         });
         mBeaconManager.bind(this);
@@ -198,7 +205,6 @@ public class MainActivity extends ListActivity implements BeaconConsumer, Reques
                         _uuids.add(_uuid);
                     }
                 }
-
                 for (String s : _uuids) {
                     try {
                         Region region = new Region(s, Identifier.parse(s), null, null);

@@ -12,6 +12,8 @@ import com.squareup.picasso.Picasso;
 import com.wci.android.ballistaibeacondemo.R;
 import com.wci.android.ballistaibeacondemo.http.BallistaBeacon;
 
+import org.altbeacon.beacon.Beacon;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -98,6 +100,18 @@ public class BeaconAdapter extends ArrayAdapter<BallistaBeacon> {
             this.add(b);
         }
     }
+
+    public void updateAll(Collection<Beacon> beacons) {
+        for (Beacon _beacon : beacons) {
+            BallistaBeacon ballistaBeacon = new BallistaBeacon(_beacon);
+            add(ballistaBeacon);
+        }
+    }
+
+    public List<BallistaBeacon> getAll() {
+        return list;
+    }
+
 
     public class ViewHolder {
 

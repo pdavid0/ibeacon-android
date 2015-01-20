@@ -2,6 +2,7 @@ package com.wci.android.ballistaibeacondemo.http;
 
 
 import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.Region;
 
 /**
  * Created by philippe on 14-07-25.

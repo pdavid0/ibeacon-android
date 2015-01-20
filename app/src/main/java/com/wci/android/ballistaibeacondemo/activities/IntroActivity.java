@@ -17,8 +17,10 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.wci.android.ballistaibeacondemo.R;
+import com.wherecloud.android.view.animation.CustomAnims;
 
 import org.altbeacon.beacon.BeaconManager;
+import org.apache.http.conn.ClientConnectionManager;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -28,6 +30,8 @@ public class IntroActivity extends Activity {
 
     private static final String TAG = "IntroActivity";
     private static final int REQUEST_ENABLE_BT = 1;
+    private static final int REQUEST_ENABLE_WIFI = 2;
+    private static final int REQUEST_ENABLE_DATA = 3;
 
     @InjectView(R.id.intro_img_connection) ImageView mImgConnection;
     @InjectView(R.id.intro_img_bt_services) ImageView mImgBtServices;
@@ -50,6 +54,7 @@ public class IntroActivity extends Activity {
         } else {
             Toast.makeText(this, "You do not have connectivity.", Toast.LENGTH_SHORT).show();
             animateViewAlpha(mImgConnection, 0, mTintColor);
+            CustomAnims.bounce(mImgConnection);
         }
 
         //TODO: ask user to open bluetooth
@@ -65,6 +70,7 @@ public class IntroActivity extends Activity {
         } else {
             Toast.makeText(this, "Bluetooth Low Energy is not enabled on your device. This application is rather useless without it. Open bluetooth and restart App.", Toast.LENGTH_SHORT).show();
             animateViewAlpha(mImgBtServices, 1, mTintColor);
+            CustomAnims.bounce(mImgBtServices);
         }
 
         if (mBluetoothAvailable && mNetworkIsAvailable) {
@@ -79,6 +85,7 @@ public class IntroActivity extends Activity {
             animateViewAlpha(mOk, 2, mTintColor);
             animateViewAlpha(mNext, 3, mTintColor);
 
+            CustomAnims.bounce(mNext);
             mNext.animate().y(200).translationY(-100).setStartDelay(2800).setInterpolator(new AccelerateDecelerateInterpolator()).start();
         }
     }
@@ -98,6 +105,37 @@ public class IntroActivity extends Activity {
         }
     }
 
+    @OnClick(R.id.intro_img_bt_services)
+    public void onBtErrorClick(View v) {
+
+        CustomAnims.bounce(mImgBtServices);
+        if (!mBluetoothAvailable) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        }else {
+            CustomAnims.bounce(mNext);
+        }
+    }
+
+    @OnClick(R.id.intro_img_connection)
+    public void onConnectionErrorClick(View v) {
+        if (!mNetworkIsAvailable) {
+            CustomAnims.bounce(mImgConnection);
+            Intent gpsOptionsIntent = new Intent(  android.provider.Settings.ACTION_WIFI_SETTINGS);
+            startActivityForResult(gpsOptionsIntent,REQUEST_ENABLE_WIFI);
+        }else {
+            CustomAnims.bounce(mNext);
+        }
+    }
+
+    @OnClick(R.id.intro_img_ok)
+    public void onErrorClick(View v) {
+        CustomAnims.bounce(mOk);
+        CustomAnims.bounce(mNext);
+        CustomAnims.bounce(mImgConnection);
+        CustomAnims.bounce(mImgBtServices);
+        Toast.makeText(this, "Try Clicking on the missing feature to enable them !;)", Toast.LENGTH_SHORT).show();
+    }
     /**
      * Show a view with an Alpha Animation, from 0 to 1.
      *

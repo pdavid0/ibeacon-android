@@ -63,10 +63,14 @@ public class BeaconApp extends Application implements BootstrapNotifier {
         backgroundPowerSaver = new BackgroundPowerSaver(this);
     }
 
+    public HashMap<String, BallistaBeacon> getBeaconHash() {
+        return beaconHash;
+    }
+
     public void setBeaconList(List<BallistaBeacon> beaconList) {
 
         for (BallistaBeacon _ballistaBeacon : beaconList) {
-            String key = _ballistaBeacon.uuid + "-" + _ballistaBeacon.major + "-" + _ballistaBeacon.minor;
+            String key = _ballistaBeacon.toString();//_ballistaBeacon.uuid + "-" + _ballistaBeacon.major + "-" + _ballistaBeacon.minor;
             beaconHash.put(key, _ballistaBeacon);
         }
     }
