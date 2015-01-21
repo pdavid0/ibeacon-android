@@ -113,5 +113,5 @@
     </style>
 
 
-    <style name="AppThemeNoActionBar" parent="android:Theme.Material.NoActionBar"></style>
+    <style name="AppThemeNoActionBar" parent="android:Theme.Material.NoActionBar"/>
 </resources>
