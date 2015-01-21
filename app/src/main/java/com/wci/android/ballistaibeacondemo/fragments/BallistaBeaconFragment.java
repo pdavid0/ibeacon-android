@@ -6,8 +6,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
+import android.widget.ListView;
 
 import com.squareup.otto.Subscribe;
 import com.wci.android.ballistaibeacondemo.BeaconApp;
@@ -27,124 +26,95 @@ import java.util.ArrayList;
  * Activities containing this fragment MUST implement the {@link OnFragmentInteractionListener}
  * interface.
  */
-public class BallistaBeaconFragment extends ListFragment implements AbsListView.OnItemClickListener {
+public class BallistaBeaconFragment extends ListFragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+	private OnFragmentInteractionListener mListener;
 
-    // TODO: Rename and change types of parameters
-//    private String mParam1;
-//    private String mParam2;
+	/**
+	 * The Adapter which will be used to populate the ListView/GridView with
+	 * Views.
+	 */
+	private BeaconAdapter mAdapter;
 
-    private OnFragmentInteractionListener mListener;
+	public static BallistaBeaconFragment newInstance(String param1, String param2) {
+		BallistaBeaconFragment fragment = new BallistaBeaconFragment();
+		return fragment;
+	}
 
-//    /**
-//     * The fragment's ListView/GridView.
-//     */
-//    private AbsListView mListView;
+	/**
+	 * Mandatory empty constructor for the fragment manager to instantiate the
+	 * fragment (e.g. upon screen orientation changes).
+	 */
+	public BallistaBeaconFragment() {
+	}
 
-    /**
-     * The Adapter which will be used to populate the ListView/GridView with
-     * Views.
-     */
-    private BeaconAdapter mAdapter;
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 
-    // TODO: Rename and change types of parameters
-    public static BallistaBeaconFragment newInstance(String param1, String param2) {
-        BallistaBeaconFragment fragment = new BallistaBeaconFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+		mAdapter = new BeaconAdapter(getActivity(), new ArrayList<BallistaBeacon>());
 
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
-    public BallistaBeaconFragment() {
-    }
+		setListAdapter(mAdapter);
+	}
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-//        if (getArguments() != null) {
-//            mParam1 = getArguments().getString(ARG_PARAM1);
-//            mParam2 = getArguments().getString(ARG_PARAM2);
-//        }
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+	                         Bundle savedInstanceState) {
+		View view = inflater.inflate(R.layout.fragment_ballista_beacon, container, false);
+		return view;
+	}
 
-        // TODO: Change Adapter to display your content
-//        mAdapter = new ArrayAdapter<DummyContent.DummyItem>(getActivity(),
-//                android.R.layout.simple_list_item_1, android.R.id.text1, DummyContent.ITEMS);
-        mAdapter = new BeaconAdapter(getActivity(), new ArrayList<BallistaBeacon>());
-        setListAdapter(mAdapter);
-    }
+	@Override
+	public void onAttach(Activity activity) {
+		super.onAttach(activity);
+		try {
+			mListener = (OnFragmentInteractionListener) activity;
+			BeaconApp.getBus().register(this);
+		}
+		catch (ClassCastException e) {
+			throw new ClassCastException(
+					activity.toString()
+							+ " must implement Listener"
+			);
+		}
+	}
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_ballista_beacon, container, false);
-//        mListView = (AbsListView) view.findViewById(R.id.list_beacon);
-        // Set the adapter
-//        mListView.setAdapter(mAdapter);
+	@Override
+	public void onDetach() {
+		super.onDetach();
+		mListener = null;
+		BeaconApp.getBus().unregister(this);
+	}
 
-        // Set OnItemClickListener so we can be notified on item clicks
-//        mListView.setOnItemClickListener(this);
-//        mListView.setEmptyView(view.findViewById(R.id.view_stub_empty_list));
+	@Override public void onListItemClick(ListView l, View v, int position, long id) {
+		super.onListItemClick(l, v, position, id);
+		if (null != mListener) {
+			// Notify the active callbacks interface (the activity, if the
+			// fragment is attached to one) that an item has been selected.
+			final BallistaBeacon itemIdAtPosition = (BallistaBeacon)
+					getListView().getAdapter().getItem(position);
 
-        return view;
-    }
+			mListener.onBallistaBeaconItemClick(itemIdAtPosition);
+		}
+	}
 
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        try {
-            mListener = (OnFragmentInteractionListener) activity;
-            BeaconApp.getBus().register(this);
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement Listener");
-        }
-    }
+	@Subscribe
+	public void beaconInRange(RangeBeaconEvent event) {
+		mAdapter.addAll(event.getBeacons());
+	}
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
-        BeaconApp.getBus().unregister(this);
-    }
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if (null != mListener) {
-            // Notify the active callbacks interface (the activity, if the
-            // fragment is attached to one) that an item has been selected.
-            final BallistaBeacon itemIdAtPosition = (BallistaBeacon) parent.getItemAtPosition(position);
-            mListener.onBallistaBeaconItemClick(itemIdAtPosition);
-        }
-    }
-
-    @Subscribe
-    public void beaconInRange(RangeBeaconEvent event) {
-//        mAdapter.clear();
-        mAdapter.addAll(event.getBeacons());
-    }
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-        public void onBallistaBeaconItemClick(BallistaBeacon mBeacon);
-    }
+	/**
+	 * This interface must be implemented by activities that contain this
+	 * fragment to allow an interaction in this fragment to be communicated
+	 * to the activity and potentially other fragments contained in that
+	 * activity.
+	 * <p/>
+	 * See the Android Training lesson <a href=
+	 * "http://developer.android.com/training/basics/fragments/communicating.html"
+	 * >Communicating with Other Fragments</a> for more information.
+	 */
+	public interface OnFragmentInteractionListener {
+		public void onBallistaBeaconItemClick(BallistaBeacon mBeacon);
+	}
 
 }

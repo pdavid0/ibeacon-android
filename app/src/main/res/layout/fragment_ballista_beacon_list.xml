@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.wci.android.ballistaibeacondemo.fragments.BallistaBeaconFragment">
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             tools:context="com.wci.android.ballistaibeacondemo.fragments.BallistaBeaconFragment">
 
 
     <ListView
@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context="com.wci.android.ballistaibeacondemo.activities.MainActivity"
-        tools:listitem="@layout/list_item_ibeacon" />
+        tools:listitem="@layout/list_item_ibeacon"/>
 
     <ViewStub
         android:id="@android:id/empty"
@@ -19,6 +19,6 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:inflatedId="@+id/view_stub_empty_list"
-        android:layout="@layout/view_stub_empty_list" />
+        android:layout="@layout/view_stub_empty_list"/>
 
 </FrameLayout>

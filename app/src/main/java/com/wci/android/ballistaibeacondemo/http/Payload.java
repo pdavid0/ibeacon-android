@@ -6,16 +6,16 @@ package com.wci.android.ballistaibeacondemo.http;
  * @author philippe
  */
 public class Payload {
-    public String url = "";
+	public String url = "";
 
-    public Payload() {
-    }
+	public Payload() {
+	}
 
-    public Payload(String beaconPayload) {
-        url = beaconPayload;
-    }
+	public Payload(String beaconPayload) {
+		url = beaconPayload;
+	}
 
-    @Override public String toString() {
-        return url;
-    }
+	@Override public String toString() {
+		return url;
+	}
 }

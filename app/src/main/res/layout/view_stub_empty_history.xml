@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+              android:orientation="vertical"
+              android:gravity="center"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
 
     <ImageView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:src="@drawable/success_512_w"
-        android:tint="@color/accent"
-        android:contentDescription="check mark" />
+               android:layout_width="match_parent"
+               android:layout_height="wrap_content"
+               android:orientation="vertical"
+               android:src="@drawable/success_512_w"
+               android:tint="@color/accent"
+               android:contentDescription="check mark"/>
 
     <TextView
         android:layout_width="match_parent"
@@ -19,5 +19,5 @@
         android:gravity="center"
         android:layout_marginTop="@dimen/activity_horizontal_margin"
         android:text="Nothing here yet !"
-        android:textAppearance="?android:textAppearanceLarge" />
+        android:textAppearance="?android:textAppearanceLarge"/>
 </LinearLayout>
