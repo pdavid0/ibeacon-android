@@ -1,24 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_gravity="center"
+    android:orientation="vertical"
     android:gravity="center"
-    android:orientation="vertical">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <ImageView xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:src="@drawable/bluetooth"
+        android:src="@drawable/success_512_w"
         android:tint="@color/accent"
-        android:contentDescription="bluetooth logo" />
+        android:contentDescription="check mark" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:layout_marginTop="@dimen/activity_horizontal_margin"
-        android:text="@string/warning_no_beacon_keep_moving"
+        android:text="Nothing here yet !"
         android:textAppearance="?android:textAppearanceLarge" />
 </LinearLayout>

@@ -12,6 +12,8 @@ import com.squareup.picasso.Picasso;
 import com.wci.android.ballistaibeacondemo.R;
 import com.wci.android.ballistaibeacondemo.http.BallistaBeacon;
 
+import org.altbeacon.beacon.Beacon;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -49,11 +51,18 @@ public class BeaconAdapter extends ArrayAdapter<BallistaBeacon> {
         h.uuid.setText(beacon.uuid);
         h.major.setText("" + beacon.major);
         h.minor.setText("" + beacon.minor);
+        h.distance.setText("" + beacon.distance);
         String beaconPayload = beacon.payload.url;
 
-        Picasso.with(getContext())
-                .load(beaconPayload)
-                .into(h.payload);
+        if (beaconPayload != null && beaconPayload.length() > 0) {
+            Picasso.with(getContext())
+                    .load(beaconPayload)
+                    .into(h.payload);
+        } else {
+            h.payload.setImageResource(R.drawable.close_96);
+            h.payload.setColorFilter(getContext().getResources().getColor(R.color.accent));
+
+        }
 
         return convertView;
     }
@@ -99,12 +108,18 @@ public class BeaconAdapter extends ArrayAdapter<BallistaBeacon> {
         }
     }
 
+    public List<BallistaBeacon> getAll() {
+        return list;
+    }
+
+
     public class ViewHolder {
 
         TextView uuid;
         TextView major;
         TextView minor;
         ImageView payload;
+        TextView distance;
 //        TextView rssi;
 
         public ViewHolder(View convertView) {
@@ -112,6 +127,7 @@ public class BeaconAdapter extends ArrayAdapter<BallistaBeacon> {
             major = (TextView) convertView.findViewById(R.id.list_item_major_id);
             minor = (TextView) convertView.findViewById(R.id.list_item_minor_id);
             payload = (ImageView) convertView.findViewById(R.id.list_item_payload);
+            distance = (TextView) convertView.findViewById(R.id.list_item_distance);
 //            uuid = (TextView) convertView.findViewById(R.id.list_item_ssid);
         }
     }

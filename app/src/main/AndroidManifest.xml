@@ -5,6 +5,7 @@
     <!-- Needed permissions in order to scan for beacons. -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <!-- Declaration that this app is usable on phones with Bluetooth Low Energy. -->
     <uses-feature

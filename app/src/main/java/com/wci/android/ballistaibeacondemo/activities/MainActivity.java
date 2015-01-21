@@ -1,41 +1,40 @@
 package com.wci.android.ballistaibeacondemo.activities;
 
 import android.app.ActionBar;
+import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.app.ListActivity;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v13.app.FragmentPagerAdapter;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.Toast;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
-import com.google.gson.Gson;
 import com.octo.android.robospice.SpiceManager;
 import com.octo.android.robospice.persistence.DurationInMillis;
 import com.octo.android.robospice.persistence.exception.SpiceException;
 import com.octo.android.robospice.request.listener.RequestListener;
 import com.wci.android.ballistaibeacondemo.BeaconApp;
 import com.wci.android.ballistaibeacondemo.R;
+import com.wci.android.ballistaibeacondemo.events.RangeBeaconEvent;
 import com.wci.android.ballistaibeacondemo.fragments.BallistaBeaconFragment;
 import com.wci.android.ballistaibeacondemo.fragments.EventHistoryFragment;
-import com.wci.android.ballistaibeacondemo.fragments.ProfileFragment;
 import com.wci.android.ballistaibeacondemo.http.BallistaBeacon;
 import com.wci.android.ballistaibeacondemo.http.ListBeaconRequest;
 import com.wci.android.ballistaibeacondemo.http.ListBeaconResult;
-import com.wci.android.ballistaibeacondemo.models.People;
+import com.wci.android.ballistaibeacondemo.models.Event;
+import com.wci.android.ballistaibeacondemo.models.HistoryEvent;
 import com.wherecloud.android.http.RequestManager;
 import com.wherecloud.android.http.requests.AbstractRequest;
 
@@ -48,12 +47,13 @@ import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends ListActivity implements BeaconConsumer,
+public class MainActivity extends Activity implements BeaconConsumer,
         BallistaBeaconFragment.OnFragmentInteractionListener,
         RequestListener<ListBeaconResult>,
-        ActionBar.TabListener {
+        ActionBar.TabListener, MonitorNotifier, RangeNotifier {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -75,50 +75,21 @@ public class MainActivity extends ListActivity implements BeaconConsumer,
     private BeaconManager mBeaconManager = BeaconManager.getInstanceForApplication(this);
     private AbstractRequest listBeaconRequest;
     private SpiceManager spiceManager;
+    private BeaconApp beaconApp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-        setProgressBarIndeterminateVisibility(true);
 
         setContentView(R.layout.activity_main);
-
+        beaconApp = BeaconApp.getInstance();
         spiceManager = RequestManager.getInstance().getSpiceManager();
         listBeaconRequest = new ListBeaconRequest(getString(R.string.ballista_api_list_beacons), this);
 
-        mBeaconManager.setMonitorNotifier(new MonitorNotifier() {
-            @Override
-            public void didEnterRegion(Region region) {
-                Log.i("MonitorNotifier", "Did enter Region ID : " + region.getUniqueId());
-            }
-
-            @Override
-            public void didExitRegion(Region region) {
-                Log.i("MonitorNotifier", "Did exit Region ID : " + region.getUniqueId());
-            }
-
-            @Override
-            public void didDetermineStateForRegion(int i, Region region) {
-                Log.i("MonitorNotifier", "Did determine Region ID : " + region.getUniqueId() + "\ti: " + ((i == 0) ? " INSIDE " : " OUTSIDE "));
-            }
-        });
-        mBeaconManager.setRangeNotifier(new RangeNotifier() {
-            @Override
-            public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
-                Log.i("RangeNotifier", "Did Range Beacons In Region : " + region.getUniqueId() + "\tcount: " + beacons.size());
-
-                for (Beacon _beacon : beacons) {
-
-                    String _UUID = _beacon.getId1().toString();
-                    Log.i("RangeNotifier", "Name: " + _beacon.getBluetoothName() + "\t UUID: " + _UUID);
-
-                    String _beaconPayload = BeaconApp.getInstance().getBeaconPayload(_UUID + "-" + _beacon.getId2().toString() + "-" + _beacon.getId3().toString());
-
-                    Log.i("PAYLOAD", _beaconPayload);
-                }
-            }
-        });
+        //TODO : Determine what action to take when we see which beacon
+//        mBeaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
+//        mBeaconManager.setForegroundScanPeriod(1000L * 60L * 5L); // 5 mins
+//        mBeaconManager.setForegroundBetweenScanPeriod(1000L * 5L); // 5 mins
         mBeaconManager.bind(this);
 
         // Set up the action bar.
@@ -156,6 +127,9 @@ public class MainActivity extends ListActivity implements BeaconConsumer,
                             .setText(mSectionsPagerAdapter.getPageTitle(i))
                             .setTabListener(this));
         }
+        //test History
+        BeaconApp.getBus().post(new HistoryEvent(new Event("Login successfull", "Welcome Back !", "success")));
+
     }
 
     //<editor-fold desc="LIFECYCLE">
@@ -171,15 +145,13 @@ public class MainActivity extends ListActivity implements BeaconConsumer,
     protected void onResume() {
         super.onResume();
 
-        setProgressBarIndeterminateVisibility(true);
-
         RequestManager.getInstance().performRequest(listBeaconRequest, MainActivity.this, DurationInMillis.ALWAYS_EXPIRED, spiceManager);
 
-        ((BeaconApp) getApplication()).setMonitoringActivity(this);
-
-        if (mBeaconManager.isBound(this)) {
-            mBeaconManager.setBackgroundMode(false);
-        }
+//        ((BeaconApp) getApplication()).setMonitoringActivity(this);
+//
+//        if (mBeaconManager.isBound(this)) {
+//            mBeaconManager.setBackgroundMode(false);
+//        }
     }
 
     @Override
@@ -192,11 +164,9 @@ public class MainActivity extends ListActivity implements BeaconConsumer,
     protected void onPause() {
         super.onPause();
 
-        ((BeaconApp) getApplication()).setMonitoringActivity(null);
-
-        if (mBeaconManager.isBound(this)) {
-            mBeaconManager.setBackgroundMode(true);
-        }
+//        if (mBeaconManager.isBound(this)) {
+//            mBeaconManager.setBackgroundMode(true);
+//        }
     }
 
     @Override
@@ -237,66 +207,83 @@ public class MainActivity extends ListActivity implements BeaconConsumer,
 
     @Override
     public void onRequestSuccess(ListBeaconResult result) {
-        setProgressBarIndeterminateVisibility(false);
         if (result != null) {
             if (result.beacons != null) {
-                BeaconApp.getInstance().setBeaconList(result.beacons);
-                manageBeacons(result);
+                Log.i(TAG, "Ballista requestSuccess, start managing becons");
+
+
+                beaconApp.setBeaconList(result.beacons);
+
+                manageBeacons(result.beacons);
             }
         }
     }
 
-    private void manageBeacons(ListBeaconResult result) {
-        //unique uuids
-        for (BallistaBeacon _beacon : result.beacons) {
-            Log.i(TAG, "Received Beacon" + _beacon.toString());
-            try {
-                Region region = new Region(
-                        _beacon.uuid,
-                        Identifier.parse(_beacon.uuid),
-                        Identifier.fromInt(_beacon.major),
-                        Identifier.fromInt(_beacon.minor));
 
-                mBeaconManager.startMonitoringBeaconsInRegion(region);
-                mBeaconManager.startRangingBeaconsInRegion(region);
-            } catch (RemoteException e) {
-                Log.e(TAG, e.getLocalizedMessage());
-            }
-        }
-    }
     //</editor-fold>
 
     @Override
     public void onBeaconServiceConnect() {
-        Toast.makeText(this, "onBeaconServiceConnect", Toast.LENGTH_SHORT).show();
-//        manageBeacons(BeaconApp.getInstance());
+        Log.i(TAG, "Ready to scan !");
+        mBeaconManager.setMonitorNotifier(this);
+        mBeaconManager.setRangeNotifier(this);
+//        Toast.makeText(this, "onBeaconServiceConnect", Toast.LENGTH_SHORT).show();
+        List<BallistaBeacon> beconsList = beaconApp.getBeconsList();
+        Log.i(TAG, "Ballista sent me : " + beconsList.size());
+        manageBeacons(beconsList);
     }
 
-    //
-    ValueEventListener mPeopleListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                //create people if they dont exists
-                //update them otherwise
-                BeaconApp.getInstance().peopleHash.put(snapshot.getKey(), new People(snapshot));
+    /**
+     * @param beacons
+     */
+    private void manageBeacons(List<BallistaBeacon> beacons) {
+        //unique uuids
+        if (beacons != null) {
+            for (BallistaBeacon _beacon : beacons) {
+                Log.i(TAG, "Received Beacon: \t" + _beacon.toString());
+                try {
+//                    Region region = new Region(
+//                            _beacon.uuid,
+//                            Identifier.parse(_beacon.uuid),
+//                            Identifier.fromInt(_beacon.major),
+//                            Identifier.fromInt(_beacon.minor)
+//                            //                null
+//                    );
+                    Region region = new Region(
+                            _beacon.uuid,
+                            Identifier.parse(_beacon.uuid),
+                            null, null
+//                            Identifier.fromInt(0),
+//                            Identifier.fromInt(0)
+                            //                null
+                    );
+                    mBeaconManager.startMonitoringBeaconsInRegion(region);
+                    mBeaconManager.startRangingBeaconsInRegion(region);
+                } catch (RemoteException e) {
+                    Log.e(TAG, e.getLocalizedMessage());
+                }
             }
         }
+    }
 
-        @Override
-        public void onCancelled(FirebaseError firebaseError) {
-            firebaseError.toException().printStackTrace();
-        }
-    };
+    //<editor-fold desc="Fragment Callbacks">
 
+    /**
+     * See {@link com.wci.android.ballistaibeacondemo.fragments.BallistaBeaconFragment.OnFragmentInteractionListener}
+     *
+     * @param mBeacon The selected beacon
+     */
     @Override
     public void onBallistaBeaconItemClick(BallistaBeacon mBeacon) {
 
         final Intent intent = new Intent(this, BeaconDetailActivity.class);
-        intent.putExtra(BeaconDetailActivity.BEACON_KEY, new Gson().toJson(mBeacon));
-        startActivity(intent);
+        intent.putExtra(BeaconDetailActivity.BEACON_KEY, mBeacon.toString());
+        startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(this, findViewById(R.id.list_item_payload), "payload").toBundle());
     }
 
+    //</editor-fold>
+
+    //TODO remove?
     //<editor-fold desc="TABS">
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
@@ -312,7 +299,85 @@ public class MainActivity extends ListActivity implements BeaconConsumer,
     @Override
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
     }
+
     //</editor-fold>
+    //TODO remove?
+
+    //<editor-fold desc="AltBeacon Region">
+    @Override
+    public void didEnterRegion(Region region) {
+        Log.i("MonitorNotifier", "Did enter Region ID : " + region.getUniqueId());
+//                new BallistaBeacon(region);
+//                HashMap<String, BallistaBeacon> beaconHash = BeaconApp.getInstance().getBecons();
+//                for (String identifier : beaconHash.keySet()) {
+//                    identifier.equalsIgnoreCase()
+//                }
+    }
+
+    @Override
+    public void didExitRegion(Region region) {
+        Log.i("MonitorNotifier", "Did exit Region ID : " + region.getUniqueId());
+    }
+
+    @Override
+    public void didDetermineStateForRegion(int state, Region region) {
+        Log.i("MonitorNotifier",
+                "Did determine Region ID : "
+                        + region.getUniqueId()
+                        + "\tstate: " + ((state == MonitorNotifier.INSIDE) ? " INSIDE " : " OUTSIDE ")
+        );
+    }
+
+    @Override
+    public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+        Log.i("RangeNotifier",
+                "Did Range Beacons In Region : " + region.getUniqueId()
+                        + "\tregion toString() : " + region.toString()
+                        + "\tcount: " + beacons.size());
+        StringBuilder sb = new StringBuilder();
+        for (Beacon beacon : beacons) {
+            sb.append(beacon.toString());
+            sb.append("\n");
+        }
+        //add to history
+        BeaconApp.getBus().post(
+                new HistoryEvent(
+                        new Event("RangeNotifier", String.format("Did Range Beacons In Region : %1$s, %2$s", region.getUniqueId(), sb.toString()), "")
+                ));
+
+        BeaconApp.getBus().post(new RangeBeaconEvent(beacons));
+    }
+
+    /**
+     * :(
+     *
+     * @param region
+     * @return
+     */
+    private String forgeKey(Region region) {
+        return region.getId2().toString() + "-" + region.getId3() + "-" + region.getUniqueId();
+    }
+    //</editor-fold>
+
+    private void sendNotification() {
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(this)
+                        .setContentTitle("Beacon Reference Application")
+                        .setContentText("An beacon is nearby.")
+                        .setSmallIcon(R.drawable.success_512_w);
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addNextIntent(new Intent(this, MainActivity.class));
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        builder.setContentIntent(resultPendingIntent);
+        NotificationManager notificationManager =
+                (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(1, builder.build());
+    }
 
     /**
      * A {@link android.support.v13.app.FragmentPagerAdapter} that returns a fragment corresponding to
@@ -332,13 +397,10 @@ public class MainActivity extends ListActivity implements BeaconConsumer,
             Fragment fragment;
             switch (position) {
                 case 1:
-                    fragment = BallistaBeaconFragment.newInstance("", "");
-                    break;
-                case 2:
                     fragment = EventHistoryFragment.newInstance("", "");
                     break;
-                default:
-                    fragment = ProfileFragment.newInstance("", "");
+                default://0
+                    fragment = BallistaBeaconFragment.newInstance("", "");
                     break;
             }
             return fragment;
@@ -347,18 +409,18 @@ public class MainActivity extends ListActivity implements BeaconConsumer,
         @Override
         public int getCount() {
             // Show 3 total pages.
-            return 3;
+            return 2;
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
             Locale l = Locale.getDefault();
             switch (position) {
+//                case 0:
+//                    return getString(R.string.title_section1).toUpperCase(l);
                 case 0:
-                    return getString(R.string.title_section1).toUpperCase(l);
-                case 1:
                     return getString(R.string.title_section2).toUpperCase(l);
-                case 2:
+                case 1:
                     return getString(R.string.title_section3).toUpperCase(l);
             }
             return null;

@@ -1,7 +1,6 @@
 package com.wci.android.ballistaibeacondemo.fragments;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.ListFragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,18 +8,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ListAdapter;
-import android.widget.TextView;
 
-import com.octo.android.robospice.SpiceManager;
-import com.octo.android.robospice.request.listener.RequestListener;
+import com.squareup.otto.Subscribe;
+import com.wci.android.ballistaibeacondemo.BeaconApp;
 import com.wci.android.ballistaibeacondemo.R;
 import com.wci.android.ballistaibeacondemo.adapters.BeaconAdapter;
+import com.wci.android.ballistaibeacondemo.events.RangeBeaconEvent;
 import com.wci.android.ballistaibeacondemo.http.BallistaBeacon;
-import com.wci.android.ballistaibeacondemo.http.ListBeaconRequest;
-import com.wci.android.ballistaibeacondemo.http.ListBeaconResult;
-import com.wherecloud.android.http.RequestManager;
-import com.wherecloud.android.http.requests.AbstractRequest;
 
 import java.util.ArrayList;
 
@@ -46,16 +40,16 @@ public class BallistaBeaconFragment extends ListFragment implements AbsListView.
 
     private OnFragmentInteractionListener mListener;
 
-    /**
-     * The fragment's ListView/GridView.
-     */
-    private AbsListView mListView;
+//    /**
+//     * The fragment's ListView/GridView.
+//     */
+//    private AbsListView mListView;
 
     /**
      * The Adapter which will be used to populate the ListView/GridView with
      * Views.
      */
-    private ListAdapter mAdapter;
+    private BeaconAdapter mAdapter;
 
     // TODO: Rename and change types of parameters
     public static BallistaBeaconFragment newInstance(String param1, String param2) {
@@ -77,7 +71,6 @@ public class BallistaBeaconFragment extends ListFragment implements AbsListView.
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
 //        if (getArguments() != null) {
 //            mParam1 = getArguments().getString(ARG_PARAM1);
 //            mParam2 = getArguments().getString(ARG_PARAM2);
@@ -87,20 +80,20 @@ public class BallistaBeaconFragment extends ListFragment implements AbsListView.
 //        mAdapter = new ArrayAdapter<DummyContent.DummyItem>(getActivity(),
 //                android.R.layout.simple_list_item_1, android.R.id.text1, DummyContent.ITEMS);
         mAdapter = new BeaconAdapter(getActivity(), new ArrayList<BallistaBeacon>());
-
+        setListAdapter(mAdapter);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_ballista_beacon, container, false);
-
+//        mListView = (AbsListView) view.findViewById(R.id.list_beacon);
         // Set the adapter
-        mListView = (AbsListView) view.findViewById(android.R.id.list);
-        mListView.setAdapter(mAdapter);
+//        mListView.setAdapter(mAdapter);
 
         // Set OnItemClickListener so we can be notified on item clicks
-        mListView.setOnItemClickListener(this);
+//        mListView.setOnItemClickListener(this);
+//        mListView.setEmptyView(view.findViewById(R.id.view_stub_empty_list));
 
         return view;
     }
@@ -110,6 +103,7 @@ public class BallistaBeaconFragment extends ListFragment implements AbsListView.
         super.onAttach(activity);
         try {
             mListener = (OnFragmentInteractionListener) activity;
+            BeaconApp.getBus().register(this);
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " must implement Listener");
@@ -120,6 +114,7 @@ public class BallistaBeaconFragment extends ListFragment implements AbsListView.
     public void onDetach() {
         super.onDetach();
         mListener = null;
+        BeaconApp.getBus().unregister(this);
     }
 
     @Override
@@ -130,6 +125,12 @@ public class BallistaBeaconFragment extends ListFragment implements AbsListView.
             final BallistaBeacon itemIdAtPosition = (BallistaBeacon) parent.getItemAtPosition(position);
             mListener.onBallistaBeaconItemClick(itemIdAtPosition);
         }
+    }
+
+    @Subscribe
+    public void beaconInRange(RangeBeaconEvent event) {
+//        mAdapter.clear();
+        mAdapter.addAll(event.getBeacons());
     }
 
     /**

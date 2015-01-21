@@ -13,16 +13,19 @@
         android:scaleType="fitCenter"
         android:layout_marginBottom="4dp"
         android:layout_height="64dp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="4dp"
         android:orientation="horizontal">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="UUID : "
             android:textAppearance="?android:textAppearanceSmall" />
+
         <TextView
             android:id="@+id/list_item_uuid"
             android:layout_width="wrap_content"
@@ -65,5 +68,21 @@
         </LinearLayout>
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="Distance: " />
+
+        <TextView
+            android:id="@+id/list_item_distance"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@null" />
+    </LinearLayout>
 
 </LinearLayout>

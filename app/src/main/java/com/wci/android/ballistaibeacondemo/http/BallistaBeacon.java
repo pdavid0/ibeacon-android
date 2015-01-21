@@ -1,6 +1,8 @@
 package com.wci.android.ballistaibeacondemo.http;
 
 
+import com.wci.android.ballistaibeacondemo.BeaconApp;
+
 import org.altbeacon.beacon.Beacon;
 
 /**
@@ -36,6 +38,10 @@ public class BallistaBeacon {
         tx = beacon.getTxPower();
         rssi = beacon.getRssi();
         distance = beacon.getDistance();
+        payload = new Payload(BeaconApp
+                .getInstance()
+                .getBeaconPayload(this.toString())
+        );
     }
 
     @Override
@@ -43,10 +49,19 @@ public class BallistaBeacon {
         return major + "-" + minor + "-" + uuid;
     }
 
-    @Override public boolean equals(Object o) {
+    @Override
+    public boolean equals(Object o) {
         final BallistaBeacon _o = (BallistaBeacon) o;
         return uuid.equalsIgnoreCase(_o.uuid)
                 && major == _o.major
                 && minor == _o.minor;
+    }
+
+    public Beacon toBeacon() {
+        return new Beacon.Builder()
+                .setId1(uuid)
+                .setId2(String.valueOf(major))
+                .setId3(String.valueOf(major))
+                .build();
     }
 }

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="AppTheme" parent="android:Theme.Material">
+    <style name="AppTheme" parent="android:Theme.Material.Light">
 
         <!-- Customize your theme here. -->
         <!-- Main theme colors -->
-        <!--   your app branding color for the app bar -->
         <item name="android:colorPrimary">@color/primary</item>
-        <!--   darker variant for the status bar and contextual app bars -->
         <item name="android:colorPrimaryDark">@color/primary_dark</item>
-        <!--   theme UI controls like checkboxes and text fields -->
         <item name="android:colorAccent">@color/accent</item>
+        <item name="android:textColorPrimary">@color/primary_text</item>
+        <item name="android:textColor">@color/secondary_text</item>
+        <item name="android:navigationBarColor">@color/primary_dark</item>
 
         <!-- enable window content transitions -->
         <item name="android:windowContentTransitions">true</item>
@@ -24,9 +24,94 @@
         <!--@transition/change_image_transform</item>-->
         <!--<item name="android:windowSharedElementExitTransition">-->
         <!--@transition/change_image_transform</item>-->
+
+
+        <!--&lt;!&ndash; Customize your theme here. &ndash;&gt;-->
+        <!--&lt;!&ndash;-->
+        <!--All dialogs will default to Theme.DARK with this set to true.-->
+        <!--&ndash;&gt;-->
+        <!--&lt;!&ndash;<item name="md_dark_theme">true</item>&ndash;&gt;-->
+
+        <!--&lt;!&ndash;-->
+        <!--This overrides the default dark or light dialog background color.-->
+        <!--Note that if you use a dark color here, you should set md_dark_theme to-->
+        <!--true so text and selectors look visible-->
+        <!--&ndash;&gt;-->
+        <!--<item name="md_background_color">@color/background_material_light</item>-->
+
+        <!--&lt;!&ndash;-->
+        <!--Applies an icon next to the title in all dialogs.-->
+        <!--&ndash;&gt;-->
+        <!--<item name="md_icon">@drawable/success_512</item>-->
+
+        <!--&lt;!&ndash;-->
+        <!--By default, the title text color is derived from the-->
+        <!--?android:textColorPrimary system attribute.-->
+        <!--&ndash;&gt;-->
+        <!--<item name="md_title_color">@color/primary_text</item>-->
+
+
+        <!--&lt;!&ndash;-->
+        <!--By default, the content text color is derived from the-->
+        <!--?android:textColorSecondary system attribute.-->
+        <!--&ndash;&gt;-->
+        <!--<item name="md_content_color">@color/secondary_text</item>-->
+
+
+        <!--&lt;!&ndash;-->
+        <!--By default, the positive action text color is derived-->
+        <!--from the colorAccent attribute of AppCompat or android:colorAccent-->
+        <!--attribute of the Material theme.-->
+        <!--&ndash;&gt;-->
+        <!--<item name="md_positive_color">@color/accent</item>-->
+
+        <!--&lt;!&ndash;-->
+        <!--By default, the positive action text color is derived-->
+        <!--from the colorAccent attribute of AppCompat or android:colorAccent-->
+        <!--attribute of the Material theme.-->
+        <!--&ndash;&gt;-->
+        <!--<item name="md_neutral_color">@color/accent</item>-->
+
+        <!--&lt;!&ndash;-->
+        <!--By default, the positive action text color is derived-->
+        <!--from the colorAccent attribute of AppCompat or android:colorAccent-->
+        <!--attribute of the Material theme.-->
+        <!--&ndash;&gt;-->
+        <!--<item name="md_negative_color">@color/accent</item>-->
+
+        <!--&lt;!&ndash;-->
+        <!--By default, the list item text color is black for the light-->
+        <!--theme and white for the dark theme.-->
+        <!--&ndash;&gt;-->
+        <!--&lt;!&ndash;<item name="md_item_color">#9C27B0</item>&ndash;&gt;-->
+
+        <!--&lt;!&ndash;-->
+        <!--This overrides the color used for the top and bottom dividers used when-->
+        <!--content is scrollable-->
+        <!--&ndash;&gt;-->
+        <!--&lt;!&ndash;<item name="md_divider_color">#E91E63</item>&ndash;&gt;-->
+
+        <!--&lt;!&ndash;-->
+        <!--This overrides the selector used on list items.-->
+        <!--&ndash;&gt;-->
+        <!--&lt;!&ndash;<item name="md_list_selector">@drawable/selector</item>&ndash;&gt;-->
+
+        <!--&lt;!&ndash;-->
+        <!--This overrides the selector used on stacked action buttons.-->
+        <!--&ndash;&gt;-->
+        <!--&lt;!&ndash;<item name="md_btn_stacked_selector">@drawable/selector</item>&ndash;&gt;-->
+
+        <!--&lt;!&ndash;This overrides the background selector used on the positive action button.&ndash;&gt;-->
+        <!--&lt;!&ndash;<item name="md_btn_positive_selector">@drawable/selector</item>&ndash;&gt;-->
+
+        <!--&lt;!&ndash;This overrides the background selector used on the neutral action button.&ndash;&gt;-->
+        <!--&lt;!&ndash;<item name="md_btn_neutral_selector">@drawable/selector</item>&ndash;&gt;-->
+
+        <!--&lt;!&ndash;            This overrides the background selector used on the negative action button.&ndash;&gt;-->
+        <!--&lt;!&ndash;<item name="md_btn_negative_selector">@drawable/selector</item>&ndash;&gt;-->
+
     </style>
 
 
-    <style name="AppThemeNoActionBar" parent="android:Theme.Material.NoActionBar">
-    </style>
+    <style name="AppThemeNoActionBar" parent="android:Theme.Material.NoActionBar"></style>
 </resources>

@@ -1,22 +1,12 @@
 package com.wci.android.ballistaibeacondemo;
 
 import android.app.Application;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.TaskStackBuilder;
-import android.content.Context;
-import android.content.Intent;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
-import com.wci.android.ballistaibeacondemo.activities.MainActivity;
 import com.wci.android.ballistaibeacondemo.http.BallistaBeacon;
-import com.wci.android.ballistaibeacondemo.models.People;
+import com.wci.android.ballistaibeacondemo.models.Person;
 
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
@@ -26,6 +16,7 @@ import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
 import org.altbeacon.beacon.startup.RegionBootstrap;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -42,7 +33,7 @@ public class BeaconApp extends Application implements BootstrapNotifier {
 
     //    private List<BallistaBeacon> beaconList;
     HashMap<String, BallistaBeacon> beaconHash = new HashMap<>();
-    public HashMap<String, People> peopleHash = new HashMap<>();
+    public HashMap<String, Person> peopleHash = new HashMap<>();
 
     private RegionBootstrap regionBootstrap;
     private BackgroundPowerSaver backgroundPowerSaver;
@@ -50,7 +41,8 @@ public class BeaconApp extends Application implements BootstrapNotifier {
     private BeaconConsumer monitoringActivity = null;
     private BeaconManager beaconManager;
 
-    private Firebase myFirebaseRef;
+    private static MyAndroidBus mEventBus;
+    private List<BallistaBeacon> beconsList = new ArrayList<>();
 
     public static BeaconApp getInstance() {
         return instance;
@@ -58,17 +50,17 @@ public class BeaconApp extends Application implements BootstrapNotifier {
 
     @Override
     public void onCreate() {
-        instance = this;
         super.onCreate();
+        instance = this;
+        mEventBus = new MyAndroidBus();
 
         Firebase.setAndroidContext(this);
-        myFirebaseRef = new Firebase("https://wherecloud.firebaseio.com/");
 
         beaconManager = BeaconManager.getInstanceForApplication(this);
+        // wake up the app when any beacon is seen (you can specify specific id filers in the parameters below)
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
 
-        // wake up the app when any beacon is seen (you can specify specific id filers in the parameters below)
-        Region region = new Region("myRegion", null, null, null);
+        Region region = new Region("com.wci.android.altbeacon.joker", null, null, null);
         regionBootstrap = new RegionBootstrap(this, region);
 
         // Simply constructing this class and holding a reference to it in your custom Application class
@@ -76,16 +68,27 @@ public class BeaconApp extends Application implements BootstrapNotifier {
         backgroundPowerSaver = new BackgroundPowerSaver(this);
     }
 
+    public HashMap<String, BallistaBeacon> getBecons() {
+        return beaconHash;
+    }
+
     public void setBeaconList(List<BallistaBeacon> beaconList) {
 
         for (BallistaBeacon _ballistaBeacon : beaconList) {
-            String key = _ballistaBeacon.uuid + "-" + _ballistaBeacon.major + "-" + _ballistaBeacon.minor;
+            String key = _ballistaBeacon.toString();
             beaconHash.put(key, _ballistaBeacon);
         }
+        this.beconsList = beaconList;
     }
 
     public String getBeaconPayload(String key) {
-        return beaconHash.get(key).payload.url;
+        BallistaBeacon ballistaBeacon = beaconHash.get(key);
+
+        if (ballistaBeacon != null) {
+            return ballistaBeacon.payload.url;
+        } else {
+            return "";
+        }
     }
 
     @Override
@@ -140,31 +143,12 @@ public class BeaconApp extends Application implements BootstrapNotifier {
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 
-    private void sendNotification() {
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this)
-                        .setContentTitle("Beacon Reference Application")
-                        .setContentText("An beacon is nearby.")
-                        .setSmallIcon(R.drawable.success_512_w);
-
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addNextIntent(new Intent(this, MainActivity.class));
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        builder.setContentIntent(resultPendingIntent);
-        NotificationManager notificationManager =
-                (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(1, builder.build());
+    public static MyAndroidBus getBus() {
+        return mEventBus;
     }
 
-    public void setMonitoringActivity(BeaconConsumer activity) {
-        this.monitoringActivity = activity;
+    public List<BallistaBeacon> getBeconsList() {
+        return beconsList;
     }
 
-    public void addPeopleChangeListener(ValueEventListener listener){
-        myFirebaseRef.child("people").addValueEventListener(listener);
-    }
 }
